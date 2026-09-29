@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BAOBAB AI — 소셜 다이닝 플랫폼 (ALIO Theme)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    * {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      box-sizing: border-box;
+    }
+    
+    /* ALIO Inspired Light Theme Canvas & Phone Frame */
+    body {
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .iphone-frame {
+      width: 395px;
+      height: 815px;
+      border-radius: 50px;
+      background: #ffffff;
+      box-shadow: 
+        0 0 0 10px #e2e8f0,
+        0 0 0 12px #cbd5e1,
+        0 20px 40px -15px rgba(15, 23, 42, 0.15);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    
+    /* Dynamic Island */
+    .dynamic-island {
+      width: 120px;
+      height: 34px;
+      background: #0f172a;
+      border-radius: 20px;
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      color: white;
+      font-size: 11px;
+    }
+    
+    .dynamic-island.expanded {
+      width: 320px;
+      height: 46px;
+      border-radius: 22px;
+      background: #090d16;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade { animation: fadeIn 0.25s ease-out forwards; }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .radar-pulse { animation: pulse-ring 2s infinite ease-in-out; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-3 select-none">
+
+  <!-- Main iPhone 17 Pro Container (ALIO Light Aesthetic) -->
+  <main class="relative">
+    <div class="iphone-frame flex flex-col justify-between text-slate-800">
+
+      <!-- Dynamic Island Bar -->
+      <div id="dynamic-island" class="dynamic-island cursor-pointer" onclick="toggleIslandExpand()">
+        <div class="flex items-center gap-1.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></div>
+          <span id="island-icon" class="text-xs">🌳</span>
+        </div>
+        <div id="island-content" class="text-[11px] font-medium text-emerald-300 truncate max-w-[180px] text-center">
+          BAOBAB AI 가디언 작동 중
+        </div>
+        <div class="flex items-center gap-1 text-[10px] text-slate-400">
+          <span id="island-badge" class="bg-slate-800 px-1.5 py-0.5 rounded text-[9px] text-emerald-400">Server 200</span>
+        </div>
+      </div>
+
+      <!-- iPhone Status Bar -->
+      <div class="pt-3 px-7 pb-2 flex justify-between items-center text-[12px] font-semibold text-slate-700 z-40 select-none">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-[10px] font-bold text-slate-500">5G</span>
+          <i data-lucide="wifi" class="w-3.5 h-3.5 text-slate-700"></i>
+          <div class="w-5 h-2.5 border border-slate-700 rounded-sm p-0.5 flex items-center">
+            <div class="h-full w-full bg-slate-800 rounded-xs"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App Header Bar -->
+      <div id="app-header-bar" class="px-5 py-2.5 bg-white/90 backdrop-blur-md border-b border-slate-100 flex items-center justify-between z-30 hidden">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-sm font-bold text-white shadow-sm">
+            🌳
+          </div>
+          <div>
+            <div class="text-xs font-bold text-slate-900 tracking-tight">BAOBAB AI</div>
+            <div id="screen-subtitle" class="text-[10px] text-indigo-600 font-medium">안전 소셜 다이닝</div>
+          </div>
+        </div>
+        <div id="agent-active-tag" class="text-[10px] bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+          <span>Agent Ready</span>
+        </div>
+      </div>
+
+      <!-- MAIN APP VIEWPORT -->
+      <div id="app-viewport" class="flex-1 overflow-y-auto no-scrollbar relative bg-slate-50 p-4 space-y-4">
+
+        <!-- ========================================== -->
+        <!-- SCREEN 0: START / ONBOARDING SCREEN (ALIO STYLE) -->
+        <!-- ========================================== -->
+        <div id="screen-0" class="flex flex-col justify-between h-full min-h-[690px] py-4 px-2 animate-fade">
+          
+          <div class="space-y-4">
+            <!-- Eyebrow Tag -->
+            <div class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1 rounded-full text-[11px] font-semibold">
+              <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+              <span>BAOBAB · SAFE SOCIAL DINING</span>
+            </div>
+
+            <!-- Hero Headlines -->
+            <div class="space-y-1.5">
+              <h1 class="text-2xl font-extrabold text-slate-900 leading-tight">
+                혼밥은 자유롭게,<br>
+                식사 동행은 <em class="not-italic text-indigo-600 underline decoration-indigo-200">BAOBAB</em>이.
+              </h1>
+              <p class="text-xs text-slate-500 leading-relaxed pt-1">
+                경상국립대 대학가 1인 가구의 외로움 해소와<br>
+                2인 이상 메뉴 고민을 AI 에이전트가 안전하게 해결해요.
+              </p>
+            </div>
+
+            <!-- Feature Chips (ALIO Mascot Chip Style) -->
+            <div class="space-y-2 pt-2">
+              <div class="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-sm flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
+                  🍲
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-slate-900">2인 이상 메뉴 걱정 끝</div>
+                  <div class="text-[10px] text-slate-500">부대찌개, 닭갈비, 삼겹살도 부담 없이 1:1 동행</div>
+                </div>
+              </div>
+
+              <div class="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-sm flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                  🛡️
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-slate-900">2단계 공인 신원 인증</div>
+                  <div class="text-[10px] text-slate-500">대학 메일 + 신분증 OCR 검증으로 신원 불확실성 해소</div>
+                </div>
+              </div>
+
+              <div class="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-sm flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-lg">
+                  🤖
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-slate-900">AutoGen 다중 에이전트 중재</div>
+                  <div class="text-[10px] text-slate-500">안심식당 추천, 실시간 통번역, 비매너 사전 감지</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons -->
+          <div class="space-y-2 pt-4">
+            <button onclick="goToSignup()" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 text-xs transition active:scale-[0.98]">
+              <span>2단계 공인 인증 회원가입하기</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+            <button onclick="quickStartGuest()" class="w-full bg-white hover:bg-slate-100 text-slate-700 font-semibold py-3 rounded-2xl border border-slate-200 text-xs transition">
+              기존 계정으로 둘러보기 (김민성 님)
+            </button>
+          </div>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- SCREEN 0.5: SIGN-UP FORM (회원가입 화면) -->
+        <!-- ========================================== -->
+        <div id="screen-signup" class="space-y-3 hidden animate-fade">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <div>
+              <h2 class="text-sm font-bold text-slate-900">바오밥 AI 회원가입</h2>
+              <p class="text-[10px] text-slate-500">대학생 & 유학생 2단계 공인 신원 인증</p>
+            </div>
+            <button onclick="goToStartScreen()" class="text-xs text-slate-400 hover:text-slate-700">취소</button>
+          </div>
+
+          <form onsubmit="handleSignupSubmit(event)" class="space-y-3 text-xs">
+            <!-- Name -->
+            <div>
+              <label class="text-[11px] font-semibold text-slate-700 block mb-1">이름</label>
+              <input type="text" id="su-name" value="김민성" required class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 outline-none focus:border-indigo-500">
+            </div>
+
+            <!-- University & Department -->
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] font-semibold text-slate-700 block mb-1">소속 대학</label>
+                <input type="text" id="su-univ" value="경상국립대학교" required class="w-full bg-white border border-slate-200 rounded-xl p-2 text-slate-900 outline-none">
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-slate-700 block mb-1">학과</label>
+                <input type="text" id="su-dept" value="경영정보학과" required class="w-full bg-white border border-slate-200 rounded-xl p-2 text-slate-900 outline-none">
+              </div>
+            </div>
+
+            <!-- 1. Univ Email Verification -->
+            <div class="bg-indigo-50/50 border border-indigo-100 rounded-xl p-2.5 space-y-1.5">
+              <label class="text-[10px] font-bold text-indigo-900 flex items-center justify-between">
+                <span>1차: 대학 메일 인증 (.ac.kr)</span>
+                <span class="text-[9px] text-emerald-600 font-bold">🟢 인증 완료</span>
+              </label>
+              <div class="flex gap-1.5">
+                <input type="email" id="su-email" value="agg1940@gnu.ac.kr" required class="flex-1 bg-white border border-indigo-200 text-xs rounded-lg p-2 text-slate-900 outline-none">
+                <button type="button" onclick="alert('인증번호가 발송되었습니다. [1940]을 입력해주세요.')" class="bg-indigo-600 text-white text-[10px] font-semibold px-2.5 py-1.5 rounded-lg">
+                  발송
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. ID Card OCR Verification -->
+            <div class="bg-emerald-50/50 border border-emerald-100 rounded-xl p-2.5 space-y-1.5">
+              <label class="text-[10px] font-bold text-emerald-900 flex items-center justify-between">
+                <span>2차: 학생증 / 신분증 OCR 검증</span>
+                <span class="text-[9px] text-emerald-600 font-bold">🟢 본인 확인 완료</span>
+              </label>
+              <div class="bg-white border border-dashed border-emerald-300 rounded-lg p-3 text-center cursor-pointer hover:bg-emerald-50/20 transition">
+                <i data-lucide="camera" class="w-5 h-5 mx-auto text-emerald-600 mb-1"></i>
+                <div class="text-[10px] text-slate-600 font-medium">학생증 사진 업로드 (OCR 연동)</div>
+                <div class="text-[9px] text-emerald-600 mt-0.5">✓ 김민성 (경상국립대) 일치</div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 text-xs transition">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+              <span>2단계 인증 & 회원가입 완료</span>
+            </button>
+          </form>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- SCREEN 1: HOME & PREFERENCES (통계 연동) -->
+        <!-- ========================================== -->
+        <div id="screen-1" class="space-y-3 hidden animate-fade">
+          
+          <!-- User Profile Card -->
+          <div class="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-sm space-y-2.5">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div class="flex items-center gap-2.5">
+                <div class="relative">
+                  <img id="user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="User Profile" class="w-10 h-10 rounded-full object-cover border-2 border-indigo-500">
+                  <div class="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 text-[8px] font-bold">✓</div>
+                </div>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span id="user-name" class="text-xs font-bold text-slate-900">김민성</span>
+                    <span id="user-dept" class="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">경영정보학과</span>
+                  </div>
+                  <div class="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5">
+                    <i data-lucide="shield-check" class="w-3 h-3"></i>
+                    <span>2단계 공인 인증 완료</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="text-right">
+                <div class="text-[9px] text-slate-400">바오밥 나무 레벨</div>
+                <div class="text-xs font-bold text-amber-500 flex items-center justify-end gap-1">
+                  <span id="user-level">🌳 Lv.4</span>
+                  <span id="user-score" class="text-[9px] text-indigo-600 font-mono">(94점)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-[10px]">
+              <div class="bg-slate-50 border border-slate-100 rounded-xl p-2 flex items-center gap-1.5">
+                <i data-lucide="mail-check" class="w-3.5 h-3.5 text-indigo-600"></i>
+                <div>
+                  <div class="text-slate-500">대학 메일</div>
+                  <div id="user-email" class="text-[9px] text-slate-900 font-medium truncate">agg1940@gnu.ac.kr</div>
+                </div>
+              </div>
+              <div class="bg-slate-50 border border-slate-100 rounded-xl p-2 flex items-center gap-1.5">
+                <i data-lucide="id-card" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <div>
+                  <div class="text-slate-500">신분증 OCR</div>
+                  <div class="text-[9px] text-emerald-600 font-medium">본인 확인 완료</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Embedded PDF 2 Survey Statistics Cards (ALIO Style) -->
+          <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-indigo-950 flex items-center gap-1.5">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-indigo-600"></i>
+                <span>경상국립대 청년 32명 수요조사 반영</span>
+              </span>
+              <span class="text-[9px] bg-indigo-600 text-white px-1.5 py-0.2 rounded-full font-semibold">통계 연동</span>
+            </div>
+
+            <div id="survey-stats-grid" class="grid grid-cols-2 gap-1.5 text-[10px]">
+              <div class="bg-white border border-indigo-100 p-2 rounded-xl space-y-0.5">
+                <div class="text-indigo-600 font-bold text-xs font-mono">71.9%</div>
+                <div class="text-slate-700 font-medium">혼밥 시 외로움 경험</div>
+                <div class="text-[8px] text-slate-400">➔ 1:1 동행 서비스 제공</div>
+              </div>
+              <div class="bg-white border border-indigo-100 p-2 rounded-xl space-y-0.5">
+                <div class="text-indigo-600 font-bold text-xs font-mono">71.9%</div>
+                <div class="text-slate-700 font-medium">2인 이상 메뉴 포기</div>
+                <div class="text-[8px] text-slate-400">➔ 부대찌개/닭갈비 매칭</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dining Preferences Form -->
+          <div class="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-sm space-y-3">
+            <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+              <i data-lucide="sliders" class="w-4 h-4 text-indigo-600"></i>
+              <span>오늘의 식사 동행 조건 설정</span>
+            </h3>
+
+            <div>
+              <label class="text-[10px] font-semibold text-slate-600 block mb-1">희망 메뉴 (2인 이상 전용 추천)</label>
+              <select id="pref-menu" class="w-full bg-slate-50 border border-slate-200 text-xs rounded-xl p-2.5 text-slate-900 outline-none focus:border-indigo-500">
+                <option value="부대찌개">🍲 부대찌개 (2인 추천)</option>
+                <option value="닭갈비">🍗 춘천 닭갈비 (2인 추천)</option>
+                <option value="삼겹살">🥩 삼겹살/목살 구이 (2인 추천)</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <label class="text-[10px] font-semibold text-slate-600 block mb-1">선호 성별</label>
+                <select id="pref-gender" class="w-full bg-slate-50 border border-slate-200 text-xs rounded-xl p-2 text-slate-900 outline-none">
+                  <option value="성별 무관">성별 무관</option>
+                  <option value="동성만">동성만 매칭</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-slate-600 block mb-1">대화 성향</label>
+                <select id="pref-talk" class="w-full bg-slate-50 border border-slate-200 text-xs rounded-xl p-2 text-slate-900 outline-none">
+                  <option value="활발한 소통">활발한 소통 선호</option>
+                  <option value="차분한 식사">차분한 식사 선호</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-base">🌐</span>
+                <div>
+                  <div class="text-[11px] font-semibold text-slate-900">외국인 유학생 동행 허용</div>
+                  <div class="text-[9px] text-slate-500">Agent 2 저지연 실시간 통번역 연동</div>
+                </div>
+              </div>
+              <input type="checkbox" id="pref-foreign" checked class="w-4 h-4 accent-indigo-600 rounded">
+            </div>
+          </div>
+
+          <button onclick="triggerMatchAPI()" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 text-xs transition active:scale-[0.98]">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <span>Agent 1: 백엔드 매칭 & 안심식당 호출</span>
+          </button>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- SCREEN 2: AGENT 1 MATCHING & MIDPOINT MAP -->
+        <!-- ========================================== -->
+        <div id="screen-2" class="space-y-3 hidden animate-fade">
+          
+          <div class="bg-slate-900 text-slate-100 rounded-2xl p-3 font-mono text-[10px] space-y-1.5 shadow-md">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
+                <span class="font-bold text-emerald-400">Express Agent 1 실행 로그</span>
+              </div>
+              <span class="text-[8px] bg-emerald-950 text-emerald-300 px-1.5 py-0.2 rounded">HTTP 200 OK</span>
+            </div>
+            
+            <div id="agent-log-box" class="space-y-1 text-slate-300 text-[9px] max-h-20 overflow-y-auto no-scrollbar">
+              <!-- Logs via API -->
+            </div>
+          </div>
+
+          <!-- Matched Partner Card -->
+          <div id="partner-card" class="bg-white border border-indigo-100 rounded-2xl p-3.5 shadow-sm relative overflow-hidden">
+            <!-- Partner info via JS -->
+          </div>
+
+          <!-- Midpoint Map -->
+          <div class="bg-white border border-slate-200/80 rounded-2xl p-3 space-y-2 shadow-sm">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-900 flex items-center gap-1">
+                <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
+                <span id="midpoint-title">두 사람의 중간지점 (진주 안심거리)</span>
+              </span>
+              <span class="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded-full font-mono font-bold">GPS OK</span>
+            </div>
+
+            <div class="h-28 bg-slate-100 rounded-xl relative overflow-hidden border border-slate-200 flex items-center justify-center">
+              <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#64748b_1px,transparent_1px)] [background-size:12px_12px]"></div>
+              
+              <svg class="absolute inset-0 w-full h-full stroke-slate-300 stroke-[3]" fill="none">
+                <path d="M 20 60 Q 150 20 350 90" />
+                <path d="M 80 120 Q 200 40 320 20" />
+              </svg>
+
+              <div class="absolute left-6 top-8 flex flex-col items-center">
+                <div class="bg-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow">김민성 (300m)</div>
+                <div class="w-2.5 h-2.5 bg-indigo-500 rounded-full border-2 border-white shadow"></div>
+              </div>
+
+              <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                <div class="radar-pulse absolute w-8 h-8 bg-indigo-500/20 rounded-full"></div>
+                <div class="bg-amber-400 text-slate-900 text-[9px] font-bold px-2 py-0.5 rounded-full shadow border border-amber-300 flex items-center gap-1 z-20">
+                  <span>🍲 중간지점 안심식당</span>
+                </div>
+              </div>
+
+              <div class="absolute right-6 bottom-6 flex flex-col items-center">
+                <div class="bg-violet-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow">Sarah (340m)</div>
+                <div class="w-2.5 h-2.5 bg-violet-500 rounded-full border-2 border-white shadow"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Restaurant Selection List -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs px-1">
+              <span class="font-bold text-slate-900">공공데이터 검증 안심식당 추천</span>
+              <span class="text-[9px] text-slate-500">제휴 혜택 자동 적용</span>
+            </div>
+            <div id="restaurant-list" class="space-y-2">
+              <!-- Restaurants populated via JS -->
+            </div>
+          </div>
+
+          <button onclick="enterChatRoom()" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 text-xs transition">
+            <i data-lucide="message-square" class="w-4 h-4"></i>
+            <span>식당 확정 & Agent 2, 3 채팅방 입장</span>
+          </button>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- SCREEN 3: AGENT 2 & 3 LIVE CHATROOM -->
+        <!-- ========================================== -->
+        <div id="screen-3" class="space-y-2.5 hidden animate-fade flex flex-col h-full">
+          
+          <div class="bg-white border border-slate-200/80 rounded-xl p-2.5 flex items-center justify-between text-xs shadow-sm">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">🍲</div>
+              <div>
+                <div id="chat-rest-name" class="font-bold text-slate-900 text-[11px]">한양부대찌개 진주본점</div>
+                <div class="text-[9px] text-indigo-600">Sarah (🇺🇸) & 김민성 (🇰🇷)</div>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-1 text-[9px] bg-emerald-50 border border-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+              <i data-lucide="shield-alert" class="w-3 h-3 text-emerald-600"></i>
+              <span>Agent 3 가디언 작동 중</span>
+            </div>
+          </div>
+
+          <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-2 flex items-center justify-between text-[10px]">
+            <div class="flex items-center gap-1.5 text-indigo-900 font-medium">
+              <i data-lucide="languages" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span>Agent 2 저지연 실시간 통번역 연동</span>
+            </div>
+            <span class="bg-indigo-600 text-white text-[8px] px-1.5 py-0.2 rounded font-bold">ON</span>
+          </div>
+
+          <div id="chat-messages" class="space-y-2 text-xs max-h-[270px] overflow-y-auto no-scrollbar p-1">
+            <div class="text-center my-1.5">
+              <span class="text-[9px] bg-slate-200/70 text-slate-600 px-2.5 py-0.5 rounded-full font-medium">
+                🤝 Agent 1 매칭 완료! 약속시간: 오늘 19:00
+              </span>
+            </div>
+
+            <div class="flex gap-2 items-start">
+              <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=120&q=80" class="w-6 h-6 rounded-full object-cover">
+              <div class="max-w-[78%] space-y-1">
+                <div class="text-[9px] text-slate-400">Sarah</div>
+                <div class="bg-white text-slate-800 p-2.5 rounded-2xl rounded-tl-none border border-slate-200/80 text-[11px] shadow-sm">
+                  Hi Minseong! I really wanted to try Budae-jjigae! Is it spicy?
+                  <div class="mt-1 pt-1 border-t border-slate-100 text-[10px] text-indigo-600 font-sans font-medium">
+                    <span>🤖 [Agent 2 번역]:</span> 안녕하세요 민성님! 부대찌개 꼭 먹어보고 싶었어요! 혹시 많이 매운가요?
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Icebreaker Card Container -->
+            <div id="icebreaker-card" class="bg-amber-50 border border-amber-200/80 rounded-xl p-2.5 text-left text-[10px] space-y-1">
+              <div class="flex items-center justify-between text-amber-900 font-bold">
+                <span class="flex items-center gap-1">
+                  💡 Agent 2 대화 주제 API
+                </span>
+                <button onclick="fetchIcebreakerAPI()" class="text-[9px] underline text-amber-700">새 주제 불러오기</button>
+              </div>
+              <p id="icebreaker-text" class="text-slate-700">
+                "초면의 어색함을 깨기 위해 서로 좋아하는 한국 음식 및 진주 캠퍼스 주변 추천 카페에 대해 이야기해보세요!"
+              </p>
+            </div>
+          </div>
+
+          <!-- Danger Simulation & SOS -->
+          <div class="bg-white border border-slate-200/80 rounded-xl p-2 space-y-1 shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-slate-500">Agent 3 가디언 검증:</span>
+              <button onclick="sendProhibitedTestMessage()" class="text-[9px] bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-lg transition font-medium">
+                [테스트] 영업/포교 전송 시연
+              </button>
+            </div>
+            
+            <button onclick="triggerSOS()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 transition">
+              <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-rose-600"></i>
+              <span>🆘 안심식당 SOS 긴급 호출</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <input type="text" id="chat-input" placeholder="메시지 입력 (Agent 2 실시간 번역)..." class="flex-1 bg-white border border-slate-200 text-xs rounded-xl p-2.5 text-slate-900 outline-none focus:border-indigo-500">
+            <button onclick="sendMessageAPI()" class="bg-indigo-600 hover:bg-indigo-500 text-white p-2.5 rounded-xl font-bold transition shadow-md">
+              <i data-lucide="send" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <button onclick="finishMealProcess()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs transition">
+            식사 완료 & 상호 매너 평가 이동
+          </button>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- SCREEN 4: POST-MEAL RATING & BAOBAB TREE GROWTH -->
+        <!-- ========================================== -->
+        <div id="screen-4" class="space-y-3 hidden animate-fade">
+          
+          <div class="text-center space-y-1">
+            <div class="inline-flex p-2.5 rounded-full bg-emerald-50 text-emerald-600 text-xl border border-emerald-100">
+              🎉
+            </div>
+            <h2 class="text-sm font-bold text-slate-900">식사가 성공적으로 완료되었습니다!</h2>
+            <p class="text-[10px] text-slate-500">Sarah 님과의 매너 평가를 진행해주세요.</p>
+          </div>
+
+          <div class="bg-white border border-slate-200/80 rounded-2xl p-3.5 space-y-3 text-xs shadow-sm">
+            <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2">Agent 3 매너 평가 API</h3>
+            
+            <div class="flex justify-center gap-2 text-2xl cursor-pointer text-amber-400">
+              <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+            </div>
+
+            <div class="space-y-1.5 text-[11px]">
+              <label class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                <input type="checkbox" checked class="accent-indigo-600">
+                <span>약속 시간 및 노쇼 없이 성실 이행</span>
+              </label>
+              <label class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                <input type="checkbox" checked class="accent-indigo-600">
+                <span>친절하고 배려 넘치는 대화 매너</span>
+              </label>
+            </div>
+
+            <button onclick="submitRatingAPI()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-md">
+              매너 평가 제출 (Agent 3 계산기 호출)
+            </button>
+          </div>
+
+          <!-- Tree Growth Result Box -->
+          <div id="tree-growth-box" class="bg-gradient-to-br from-emerald-50 to-indigo-50 border border-emerald-200 rounded-2xl p-3.5 text-center space-y-2 hidden shadow-sm">
+            <div class="text-[10px] text-emerald-800 font-semibold">Agent 3 바오밥 나무 레벨 갱신 결과</div>
+            <div id="growth-level-text" class="text-2xl font-extrabold text-amber-500 animate-bounce">
+              🌳 Lv.4 (96점)
+            </div>
+            <div id="growth-score-added" class="text-[10px] text-slate-700">
+              매너 평가 우수로 신뢰도 <span class="text-indigo-600 font-bold">+2점</span> 상승!
+            </div>
+            
+            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+              <div id="growth-bar" class="bg-gradient-to-r from-emerald-500 to-indigo-600 h-full w-[96%] transition-all duration-1000"></div>
+            </div>
+
+            <div id="reward-coupon-box" class="mt-2 bg-white border border-amber-200 p-2 rounded-xl flex items-center justify-between text-left shadow-xs">
+              <div>
+                <div class="text-[10px] font-bold text-amber-900">🎟️ 안심식당 리워드 쿠폰 획득!</div>
+                <div class="text-[8px] text-slate-500">다음 동행 시 안심식당 2,000원 추가 할인</div>
+              </div>
+              <span class="text-[10px] font-bold text-amber-600 font-mono">발급완료</span>
+            </div>
+          </div>
+
+          <button onclick="goToStartScreen()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs border border-slate-200 transition">
+            처음 온보딩 화면으로 돌아가기
+          </button>
+        </div>
+
+      </div>
+
+      <!-- iPhone Home Bar -->
+      <div class="pb-2 pt-1 flex justify-center bg-white border-t border-slate-100 z-40">
+        <div class="w-32 h-1 bg-slate-300 rounded-full"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

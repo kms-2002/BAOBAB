@@ -1,0 +1,13 @@
+{
+  "name": "baobab-ai-app",
+  "version": "1.0.0",
+  "description": "바오밥 AI: 다중 에이전트 협업 기반 안전 소셜 다이닝 플랫폼 (제4회 경남 AI·SW 경진대회 MVP)",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}

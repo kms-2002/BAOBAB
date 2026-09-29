@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>바오밥 AI (BAOBAB AI) - iPhone 17 Pro MVP</title>
+  <!-- Tailwind CSS via official gstatic CDN -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <!-- Lucide Icons CDN for sleek UI icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    * {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      box-sizing: border-box;
+    }
+    
+    /* iPhone 17 Pro frame styles */
+    .iphone-17-frame {
+      width: 395px;
+      height: 815px;
+      border-radius: 54px;
+      background: #0f172a;
+      box-shadow: 
+        0 0 0 12px #334155,
+        0 0 0 15px #1e293b,
+        0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      position: relative;
+      overflow: hidden;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Dynamic Island */
+    .dynamic-island {
+      width: 120px;
+      height: 35px;
+      background: #000;
+      border-radius: 20px;
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      color: white;
+      font-size: 11px;
+    }
+    
+    .dynamic-island.expanded {
+      width: 320px;
+      height: 48px;
+      border-radius: 24px;
+      background: #090d16;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+
+    /* Scrollbar styling */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Chat bubble animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+
+    /* Pulse radar effect */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .radar-pulse {
+      animation: pulse-ring 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-2 sm:p-6 select-none">
+
+  <!-- Top Controller Header (Outside iPhone View) -->
+  <header class="max-w-4xl w-full mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-emerald-900/40">
+        🌳
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-white flex items-center gap-2">
+          바오밥 AI <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">제4회 경남 AI·SW 경진대회 MVP (Level 3)</span>
+        </h1>
+        <p class="text-xs text-slate-400">다중 에이전트(AutoGen) 협업 기반 안전 소셜 다이닝 플랫폼 | 팀: 바오밥</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="toggleDashboardModal()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-md">
+        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+        <span>PDF 2 통계 & 공고 검증표</span>
+      </button>
+      <button onclick="resetApp()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+        <span>초기화</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main iPhone 17 Pro Container -->
+  <main class="relative">
+    <div class="iphone-17-frame flex flex-col justify-between text-slate-100">
+
+      <!-- Dynamic Island Bar -->
+      <div id="dynamic-island" class="dynamic-island cursor-pointer" onclick="toggleIslandExpand()">
+        <div class="flex items-center gap-1.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></div>
+          <span id="island-icon" class="text-xs">🌳</span>
+        </div>
+        <div id="island-content" class="text-[11px] font-medium text-emerald-300 truncate max-w-[180px] text-center">
+          바오밥 AI 가디언 가동 중
+        </div>
+        <div class="flex items-center gap-1 text-[10px] text-slate-400">
+          <span id="island-badge" class="bg-slate-800 px-1.5 py-0.5 rounded text-[9px] text-slate-300">Agent ON</span>
+        </div>
+      </div>
+
+      <!-- iPhone Status Bar -->
+      <div class="pt-3 px-7 pb-2 flex justify-between items-center text-[12px] font-semibold text-slate-300 z-40 select-none">
+        <span>12:45</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-[10px] font-bold text-slate-400">5G</span>
+          <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+          <div class="w-5 h-2.5 border border-slate-400 rounded-sm p-0.5 flex items-center">
+            <div class="h-full w-full bg-emerald-400 rounded-xs"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App Header Bar -->
+      <div class="px-5 py-2.5 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 flex items-center justify-between z-30">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center text-sm font-bold">
+            🌳
+          </div>
+          <div>
+            <div class="text-xs font-bold text-white tracking-wide">BAOBAB AI</div>
+            <div id="screen-subtitle" class="text-[10px] text-emerald-400">1단계: 2단계 신원 인증 & 프로필</div>
+          </div>
+        </div>
+        <!-- Multi-Agent Indicator Badge -->
+        <div id="agent-active-tag" class="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-2 py-1 rounded-lg flex items-center gap-1 font-mono">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Agent 1,2,3 대기</span>
+        </div>
+      </div>
+
+      <!-- MAIN APP VIEWPORT (Scrollable inside screen) -->
+      <div id="app-viewport" class="flex-1 overflow-y-auto no-scrollbar relative bg-slate-950 p-4 space-y-4">
+
+        <!-- ========================================== -->
+        <!-- SCREEN 1: ONBOARDING & AUTH (프로필 & 인증) -->
+        <!-- ========================================== -->
+        <div id="screen-1" class="space-y-4 animate-fade-in">
+          
+          <!-- Welcome Banner -->
+          <div class="bg-gradient-to-r from-emerald-900/40 via-slate-900 to-teal-900/40 border border-emerald-500/30 rounded-2xl p-4 text-left">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full">
+                바로 오늘 밥 먹을 사람!
+              </span>
+              <span class="text-[10px] text-slate-400">경상국립대 캠퍼스</span>
+            </div>
+            <h2 class="text-base font-bold text-white">혼밥의 외로움 해소 &<br><span class="text-emerald-400">공공 안심식당</span> 동행 매칭</h2>
+            <p class="text-xs text-slate-300 mt-1">2인 이상 전용 메뉴도 부담 없이! 검증된 대학생/유학생과 안심 만남</p>
+          </div>
+
+          <!-- User Authenticated Profile Card (2-Step Verification) -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+              <div class="flex items-center gap-2.5">
+                <div class="relative">
+                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="User Profile" class="w-11 h-11 rounded-full object-cover border-2 border-emerald-500">
+                  <div class="absolute -bottom-1 -right-1 bg-emerald-500 text-slate-950 rounded-full p-0.5 text-[9px] font-bold">✓</div>
+                </div>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-sm font-bold text-white">김민성</span>
+                    <span class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">경영정보학과</span>
+                  </div>
+                  <div class="text-[11px] text-emerald-400 flex items-center gap-1 mt-0.5">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                    <span>2단계 공인 인증 완료</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Baobab Tree Level Indicator -->
+              <div class="text-right">
+                <div class="text-[10px] text-slate-400">바오밥 나무 레벨</div>
+                <div class="text-xs font-bold text-amber-400 flex items-center justify-end gap-1">
+                  <span>🌳 Lv.4</span>
+                  <span class="text-[10px] text-emerald-400 font-mono">(94점)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2-Step Auth Status Badges (PDF 2 Survey Q5 match) -->
+            <div class="grid grid-cols-2 gap-2 text-[10px]">
+              <div class="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-2 flex items-center gap-2">
+                <i data-lucide="mail-check" class="w-4 h-4 text-emerald-400"></i>
+                <div>
+                  <div class="text-slate-300 font-medium">대학 메일 인증</div>
+                  <div class="text-[9px] text-emerald-400 font-mono">gnu.ac.kr (완료)</div>
+                </div>
+              </div>
+              <div class="bg-teal-950/40 border border-teal-500/30 rounded-xl p-2 flex items-center gap-2">
+                <i data-lucide="id-card" class="w-4 h-4 text-teal-400"></i>
+                <div>
+                  <div class="text-slate-300 font-medium">신분증 OCR 인증</div>
+                  <div class="text-[9px] text-teal-400">본인 확인 완료</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dining Preferences Setup Form -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-3">
+            <h3 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="sliders" class="w-4 h-4 text-emerald-400"></i>
+              <span>오늘의 식사 동행 조건 설정</span>
+            </h3>
+
+            <!-- Menu Type Selection (PDF 2 Q2: 2인 이상 메뉴 해결) -->
+            <div>
+              <label class="text-[11px] text-slate-400 block mb-1">희망 메뉴 (2인 이상 추천 메뉴)</label>
+              <select id="pref-menu" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-200 focus:border-emerald-500 outline-none">
+                <option value="부대찌개">🍲 부대찌개 (2인 추천)</option>
+                <option value="닭갈비">🍗 춘천 닭갈비 (2인 추천)</option>
+                <option value="삼겹살">🥩 삼겹살/목살 구이 (2인 추천)</option>
+                <option value="마라탕">🥘 마라탕 / 샤브샤브</option>
+              </select>
+            </div>
+
+            <!-- Partner Match Options (PDF 2 Q3 & Q7 match) -->
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <label class="text-[10px] text-slate-400 block mb-1">선호 성별</label>
+                <select id="pref-gender" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2 text-slate-200 outline-none">
+                  <option value="무관">성별 무관</option>
+                  <option value="동성">동성만 매칭</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-400 block mb-1">대화 성향</label>
+                <select id="pref-talk" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2 text-slate-200 outline-none">
+                  <option value="활발">활발한 소통 선호</option>
+                  <option value="차분">차분한 식사 선호</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Foreigner Matching Option (PDF 2 Q7: 81.3% 호응) -->
+            <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-base">🌐</span>
+                <div>
+                  <div class="text-[11px] font-semibold text-slate-200">외국인 유학생 동행 허용</div>
+                  <div class="text-[9px] text-slate-400">Agent 2 실시간 통번역 지원</div>
+                </div>
+              </div>
+              <input type="checkbox" id="pref-foreign" checked class="w-4 h-4 accent-emerald-500 rounded">
+            </div>
+          </div>
+
+          <!-- Action Button: Trigger Agent 1 -->
+          <button onclick="startMatchingProcess()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-emerald-900/30 flex items-center justify-center gap-2 text-xs transition active:scale-[0.98]">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <span>Agent 1: AI 매칭 & 안심식당 추천 시작</span>
+          </button>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- SCREEN 2: AGENT 1 MATCHING & MIDPOINT RESTAURANTS -->
+        <!-- ========================================== -->
+        <div id="screen-2" class="space-y-4 hidden animate-fade-in">
+          
+          <!-- Multi-Agent Execution Progress Terminal -->
+          <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-3.5 font-mono text-[11px] space-y-2">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></div>
+                <span class="font-bold text-emerald-400">AutoGen Multi-Agent 파이프라인</span>
+              </div>
+              <span class="text-[9px] bg-emerald-950 text-emerald-300 px-1.5 py-0.5 rounded">실시간 실행 중</span>
+            </div>
+            
+            <div id="agent-log-box" class="space-y-1.5 text-slate-300 text-[10px] max-h-24 overflow-y-auto no-scrollbar">
+              <div class="text-emerald-400">🤖 [Agent 1] GPS 위치 및 조건 분석 완료...</div>
+              <div class="text-amber-300">🤝 [Agent 1] 매칭 완료! 'Sarah (미국 유학생, 경상국립대 교환학생)'</div>
+              <div class="text-cyan-300">📍 [Agent 1] 공공데이터 안심식당 API 연동 -> 중간 지점 안심식당 3곳 추출 완료</div>
+            </div>
+          </div>
+
+          <!-- Matched Partner Card -->
+          <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/60 border border-emerald-500/40 rounded-2xl p-3.5 relative overflow-hidden">
+            <div class="absolute top-2 right-2 bg-emerald-500/20 text-emerald-300 text-[9px] px-2 py-0.5 rounded-full border border-emerald-500/30 font-bold">
+              98% 매칭 적합도
+            </div>
+
+            <div class="flex items-center gap-3">
+              <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=120&q=80" alt="Sarah" class="w-12 h-12 rounded-full object-cover border-2 border-emerald-400">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-bold text-white">Sarah Jenkins</span>
+                  <span class="text-[10px] bg-indigo-900/60 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded">🇺🇸 교환학생</span>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-0.5">경상국립대 국제어학원 | 한국어 초급</div>
+                <div class="flex items-center gap-2 mt-1 text-[10px]">
+                  <span class="text-amber-400 font-semibold">🌱 Lv.4 (92점)</span>
+                  <span class="text-slate-500">•</span>
+                  <span class="text-emerald-400">매너 5.0/5.0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Midpoint Interactive Map View Mockup -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-200 flex items-center gap-1">
+                <i data-lucide="map-pin" class="w-4 h-4 text-emerald-400"></i>
+                <span>두 사람의 중간지점 (진주 대학가 안심거리)</span>
+              </span>
+              <span class="text-[10px] text-emerald-400 font-mono">GPS 연동 완료</span>
+            </div>
+
+            <!-- Map Graphic Frame -->
+            <div class="h-32 bg-slate-950 rounded-xl relative overflow-hidden border border-slate-800 flex items-center justify-center">
+              <!-- Grid map background pattern -->
+              <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:12px_12px]"></div>
+              
+              <!-- Road simulation lines -->
+              <svg class="absolute inset-0 w-full h-full stroke-slate-800 stroke-[3]" fill="none">
+                <path d="M 20 60 Q 150 20 350 90" />
+                <path d="M 80 120 Q 200 40 320 20" />
+              </svg>
+
+              <!-- User A marker -->
+              <div class="absolute left-8 top-10 flex flex-col items-center">
+                <div class="bg-emerald-500 text-slate-950 text-[9px] font-bold px-1.5 py-0.5 rounded shadow">김민성 (300m)</div>
+                <div class="w-3 h-3 bg-emerald-400 rounded-full border-2 border-white shadow"></div>
+              </div>
+
+              <!-- Midpoint Safety Restaurant Pin -->
+              <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                <div class="radar-pulse absolute w-10 h-10 bg-emerald-500/30 rounded-full"></div>
+                <div class="bg-amber-400 text-slate-950 text-[9px] font-bold px-2 py-0.5 rounded-full shadow border border-amber-300 flex items-center gap-1 z-20">
+                  <span>🍲 중간지점 안심식당</span>
+                </div>
+                <div class="w-4 h-4 bg-amber-400 rounded-full border-2 border-slate-950 flex items-center justify-center text-[8px] z-20">★</div>
+              </div>
+
+              <!-- User B marker -->
+              <div class="absolute right-8 bottom-8 flex flex-col items-center">
+                <div class="bg-indigo-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow">Sarah (340m)</div>
+                <div class="w-3 h-3 bg-indigo-400 rounded-full border-2 border-white shadow"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Public Safety Restaurants Selection List (PDF 2 Q9 match) -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs px-1">
+              <span class="font-bold text-slate-300">공공데이터 검증 안심식당 추천</span>
+              <span class="text-[10px] text-slate-400">제휴 혜택 자동 적용</span>
+            </div>
+
+            <!-- Restaurant Option 1 (Selected) -->
+            <div onclick="selectRestaurant(1)" id="rest-1" class="bg-slate-900 border-2 border-emerald-500 rounded-xl p-3 cursor-pointer transition relative">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold text-white">🍲 한양부대찌개 진주본점</span>
+                    <span class="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.2 rounded">공공 안심식당</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-1">부대찌개 (2인분 20,000원) | 도보 4분 (중간 지점)</div>
+                  <div class="text-[9px] text-amber-400 mt-1 flex items-center gap-1">
+                    <i data-lucide="gift" class="w-3 h-3"></i>
+                    <span>바오밥 제휴: 음료수 1병 서비스 + 10% 적립</span>
+                  </div>
+                </div>
+                <div class="w-5 h-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-bold text-xs">✓</div>
+              </div>
+            </div>
+
+            <!-- Restaurant Option 2 -->
+            <div onclick="selectRestaurant(2)" id="rest-2" class="bg-slate-900 border border-slate-800 rounded-xl p-3 cursor-pointer transition opacity-75 hover:opacity-100">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold text-white">🍗 진주 유기농 닭갈비</span>
+                    <span class="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.2 rounded">공공 안심식당</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-1">치즈 닭갈비 | 도보 6분</div>
+                  <div class="text-[9px] text-slate-400 mt-1">바오밥 제휴: 사리 무료 추가</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Button: Enter Live Chat -->
+          <button onclick="enterChatRoom()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white font-bold py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-xs transition active:scale-[0.98]">
+            <i data-lucide="message-square" class="w-4 h-4"></i>
+            <span>식당 확정 & Agent 2, 3 채팅방 입장</span>
+          </button>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- SCREEN 3: AGENT 2 & 3 LIVE CHATROOM & GUARDIAN -->
+        <!-- ========================================== -->
+        <div id="screen-3" class="space-y-3 hidden animate-fade-in flex flex-col h-full">
+          
+          <!-- Chatroom Header Info -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-xs">🍲</div>
+              <div>
+                <div class="font-bold text-white text-[11px]">한양부대찌개 진주본점</div>
+                <div class="text-[9px] text-emerald-400">Sarah (🇺🇸) & 김민성 (🇰🇷)</div>
+              </div>
+            </div>
+            
+            <!-- Agent 3 Safety Status Toggle -->
+            <div class="flex items-center gap-1 text-[10px] bg-emerald-950 border border-emerald-500/40 text-emerald-300 px-2 py-1 rounded-lg">
+              <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span>Agent 3 가디언 작동 중</span>
+            </div>
+          </div>
+
+          <!-- Real-Time Auto Translation Bar (Agent 2) (PDF 2 Q8 match) -->
+          <div class="bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-2 flex items-center justify-between text-[10px]">
+            <div class="flex items-center gap-1.5 text-indigo-300">
+              <i data-lucide="languages" class="w-3.5 h-3.5 text-indigo-400"></i>
+              <span>Agent 2 저지연 실시간 한/영 통번역 스트리밍</span>
+            </div>
+            <span class="bg-indigo-500 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">ON</span>
+          </div>
+
+          <!-- Chat Messages Area -->
+          <div id="chat-messages" class="space-y-2.5 text-xs max-h-[300px] overflow-y-auto no-scrollbar p-1">
+
+            <!-- System Message -->
+            <div class="text-center my-2">
+              <span class="text-[9px] bg-slate-900 text-slate-400 px-2.5 py-1 rounded-full border border-slate-800">
+                🤝 Agent 1 매칭 성사! 약속시간: 오늘 19:00
+              </span>
+            </div>
+
+            <!-- Partner Message (Sarah) -->
+            <div class="flex gap-2 items-start">
+              <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=120&q=80" class="w-7 h-7 rounded-full object-cover">
+              <div class="max-w-[75%] space-y-1">
+                <div class="text-[10px] text-slate-400">Sarah</div>
+                <div class="bg-slate-800 text-slate-100 p-2.5 rounded-2xl rounded-tl-none border border-slate-700 text-[11px]">
+                  Hi Minseong! I really wanted to try Budae-jjigae! Is it very spicy?
+                  <div class="mt-1 pt-1 border-t border-slate-700/80 text-[10px] text-emerald-400 flex items-center gap-1 font-sans">
+                    <span>🤖 [Agent 2 번역]:</span> 안녕하세요 민성님! 부대찌개 꼭 먹어보고 싶었어요! 혹시 많이 매운가요?
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- My Message (Kim Min-seong) -->
+            <div class="flex gap-2 items-start justify-end">
+              <div class="max-w-[75%] space-y-1 text-right">
+                <div class="text-[10px] text-slate-400">나 (김민성)</div>
+                <div class="bg-emerald-700 text-white p-2.5 rounded-2xl rounded-tr-none text-[11px] text-left">
+                  안녕하세요 Sarah님! 보통 맛으로 주문하면 신라면 정도라 맛있게 드실 수 있어요!
+                  <div class="mt-1 pt-1 border-t border-emerald-600 text-[10px] text-emerald-200">
+                    <span>🤖 [Agent 2 Stream]:</span> If we order standard flavor, it's mild like Shin Ramyun, so you'll enjoy it!
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Agent 2 Icebreaker Card Prompt -->
+            <div id="icebreaker-card" class="bg-gradient-to-r from-amber-950/60 to-slate-900 border border-amber-500/40 rounded-xl p-2.5 text-left text-[10px] space-y-1">
+              <div class="flex items-center justify-between text-amber-400 font-bold">
+                <span class="flex items-center gap-1">
+                  💡 Agent 2 추천 대화 주제 카드
+                </span>
+                <button onclick="refreshIcebreaker()" class="text-[9px] underline text-amber-300">새 주제</button>
+              </div>
+              <p id="icebreaker-text" class="text-slate-200">
+                "초면의 어색함을 깨기 위해 서로 좋아하는 한국 음식 및 진주 캠퍼스 주변 추천 카페에 대해 이야기해보세요!"
+              </p>
+            </div>
+
+          </div>
+
+          <!-- Danger Simulation & Emergency SOS Bar -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-2 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-slate-400">Agent 3 검증 테스트 및 긴급 버튼:</span>
+              <button onclick="triggerDangerAlert()" class="text-[9px] bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded transition">
+                [테스트] 포교/영업 메시지 감지 시연
+              </button>
+            </div>
+            
+            <button onclick="triggerSOS()" class="w-full bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40 font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 transition">
+              <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-rose-400"></i>
+              <span>🆘 안심식당 현장 SOS 긴급 호출</span>
+            </button>
+          </div>
+
+          <!-- Input Area -->
+          <div class="flex items-center gap-2">
+            <input type="text" id="chat-input" placeholder="메시지를 입력하세요 (자동 번역 적용)..." class="flex-1 bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white outline-none focus:border-emerald-500">
+            <button onclick="sendMessage()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 p-2.5 rounded-xl font-bold transition">
+              <i data-lucide="send" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Action Button: Finish Meal -->
+          <button onclick="finishMealProcess()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2.5 rounded-xl text-xs border border-slate-700 transition">
+            식사 완료 & 상호 매너 평가 이동
+          </button>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- SCREEN 4: POST-MEAL RATING & TREE GROWTH -->
+        <!-- ========================================== -->
+        <div id="screen-4" class="space-y-4 hidden animate-fade-in">
+          
+          <div class="text-center space-y-1">
+            <div class="inline-flex p-3 rounded-full bg-emerald-500/20 text-emerald-400 text-2xl border border-emerald-500/30">
+              🎉
+            </div>
+            <h2 class="text-base font-bold text-white">식사가 성공적으로 완료되었습니다!</h2>
+            <p class="text-xs text-slate-400">Sarah 님과의 매너 평가를 진행해주세요.</p>
+          </div>
+
+          <!-- Manner Evaluation Form -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 text-xs">
+            <h3 class="font-bold text-slate-200 border-b border-slate-800 pb-2">상호 매너 평가 (Agent 3 반영)</h3>
+            
+            <!-- Star Rating -->
+            <div class="flex justify-center gap-2 text-2xl cursor-pointer text-amber-400">
+              <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+            </div>
+
+            <!-- Manner Tag Checklist -->
+            <div class="space-y-1.5 text-[11px]">
+              <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800">
+                <input type="checkbox" checked class="accent-emerald-500">
+                <span>약속 시간 및 노쇼 없이 성실 이행</span>
+              </label>
+              <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800">
+                <input type="checkbox" checked class="accent-emerald-500">
+                <span>친절하고 배려 넘치는 대화 매너</span>
+              </label>
+              <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800">
+                <input type="checkbox" checked class="accent-emerald-500">
+                <span>공공 안심식당 위생 수칙 준수</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Baobab Tree Growth Result Box -->
+          <div class="bg-gradient-to-br from-emerald-950 via-slate-900 to-teal-950 border border-emerald-500/40 rounded-2xl p-4 text-center space-y-2">
+            <div class="text-xs text-emerald-300 font-semibold">바오밥 나무 레벨 갱신 결과</div>
+            <div class="text-3xl font-extrabold text-amber-400 animate-bounce">
+              🌳 Lv.4 (96점)
+            </div>
+            <div class="text-[11px] text-slate-300">
+              매너 평가 우수로 신뢰도 <span class="text-emerald-400 font-bold">+2점</span> 상승!
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
+              <div class="bg-gradient-to-r from-emerald-500 to-amber-400 h-full w-[96%] transition-all duration-1000"></div>
+            </div>
+
+            <!-- Reward Coupon (PDF 2 Q9 match) -->
+            <div class="mt-3 bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 flex items-center justify-between text-left">
+              <div>
+                <div class="text-[11px] font-bold text-amber-300">🎟️ 안심식당 리워드 쿠폰 획득!</div>
+                <div class="text-[9px] text-slate-400">다음 동행 시 안심식당 2,000원 추가 할인</div>
+              </div>
+              <span class="text-xs font-bold text-amber-400 font-mono">발급완료</span>
+            </div>
+          </div>
+
+          <!-- Action Button: Go Home -->
+          <button onclick="resetApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3.5 rounded-2xl shadow-lg text-xs transition">
+            첫 화면으로 돌아가기
+          </button>
+        </div>
+
+      </div>
+
+      <!-- iPhone Home Indicator Bar -->
+      <div class="pb-2 pt-1 flex justify-center bg-slate-950 border-t border-slate-900 z-40">
+        <div class="w-32 h-1 bg-slate-600 rounded-full"></div>
+      </div>
+    </div>
+  </main>
+
+
+  <!-- ========================================== -->
+  <!-- MODAL: PDF 2 SURVEY DATA & MVP VALIDATION -->
+  <!-- ========================================== -->
+  <div id="dashboard-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-5 space-y-4 shadow-2xl text-slate-200">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📊</span>
+          <div>
+            <h2 class="text-base font-bold text-white">PDF 2 설문 통계 데이터 & 경진대회 공고 검증</h2>
+            <p class="text-xs text-slate-400">바오밥 AI 웹페이지가 해결하는 핵심 요구사항 요약</p>
+          </div>
+        </div>
+        <button onclick="toggleDashboardModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- PDF 2 Survey Matches Table -->
+      <div class="space-y-3 text-xs">
+        <h3 class="font-bold text-emerald-400 flex items-center gap-1.5">
+          <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+          <span>PDF 2 수요조사 설문(32명) 반영 현황</span>
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text.left">
+          <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+            <div class="text-[11px] text-amber-400 font-bold">Q1. 혼밥 시 외로움/어색함</div>
+            <div class="text-[10px] text-slate-300 mt-1">
+              <span class="font-mono text-emerald-400 font-bold">71.9%</span> 해소 요구 -> 바오밥 1:1 맞춤 동행 서비스 제공
+            </div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+            <div class="text-[11px] text-amber-400 font-bold">Q2. 2인 이상 메뉴 포기 경험</div>
+            <div class="text-[10px] text-slate-300 mt-1">
+              <span class="font-mono text-emerald-400 font-bold">71.9%</span> 경험 -> 부대찌개, 닭갈비 등 2인 메뉴 전용 매칭
+            </div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+            <div class="text-[11px] text-amber-400 font-bold">Q4. 만남 안전 우려 (영업/포교/범죄)</div>
+            <div class="text-[10px] text-slate-300 mt-1">
+              <span class="font-mono text-emerald-400 font-bold">96.9%</span> 우려 -> Agent 3 실시간 위험 언행 감지 및 안심식당 연동
+            </div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+            <div class="text-[11px] text-amber-400 font-bold">Q5. 인증 방식 선호 (휴대폰/대학메일)</div>
+            <div class="text-[10px] text-slate-300 mt-1">
+              <span class="font-mono text-emerald-400 font-bold">71.9%</span> 요구 -> 대학 메일 + 신분증 OCR 2단계 인증 반영
+            </div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+            <div class="text-[11px] text-amber-400 font-bold">Q7 & Q8. 외국인 교류 & 번역</div>
+            <div class="text-[10px] text-slate-300 mt-1">
+              <span class="font-mono text-emerald-400 font-bold">87.5%</span> 긍정 -> Agent 2 저지연 실시간 통번역 & 아이스브레이킹
+            </div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+            <div class="text-[11px] text-amber-400 font-bold">Q9 & Q10. 안심식당 혜택 & 신뢰 등급</div>
+            <div class="text-[10px] text-slate-300 mt-1">
+              <span class="font-mono text-emerald-400 font-bold">75.1%</span> 찬성 -> 바오밥 나무 레벨 (신뢰도) & 제휴 쿠폰 지급
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PDF 1 Contest Level 3 MVP Alignment -->
+      <div class="space-y-2 border-t border-slate-800 pt-3 text-xs">
+        <h3 class="font-bold text-emerald-400 flex items-center gap-1.5">
+          <i data-lucide="award" class="w-4 h-4"></i>
+          <span>PDF 1 공고문 Level 3 (MVP) 권장 목표 검증</span>
+        </h3>
+        <ul class="space-y-1.5 text-[11px] text-slate-300">
+          <li class="flex items-center gap-2">
+            <span class="text-emerald-400 font-bold">✓</span>
+            <span><b>핵심기능 3~5개 작동:</b> 2단계 인증, Agent 1 위치/안심식당 매칭, Agent 2 실시간 통번역, Agent 3 가디언 감지, 바오밥 나무 레벨 갱신</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="text-emerald-400 font-bold">✓</span>
+            <span><b>End-to-End Workflow 시연:</b> 조건 입력 -> 매칭 -> 식당 확정 -> 통번역 대화 -> 매너 평가 완료 전체 흐름 동작</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="toggleDashboardModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs transition">
+          닫기
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- JavaScript Logic -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    let currentScreen = 1;
+
+    function updateScreenSubtitle() {
+      const subtitle = document.getElementById('screen-subtitle');
+      const agentTag = document.getElementById('agent-active-tag');
+      
+      if (currentScreen === 1) {
+        subtitle.innerText = '1단계: 2단계 신원 인증 & 프로필';
+        agentTag.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>Agent 1,2,3 대기</span>`;
+      } else if (currentScreen === 2) {
+        subtitle.innerText = '2단계: Agent 1 매칭 & 안심식당';
+        agentTag.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span><span>Agent 1 작동 중</span>`;
+      } else if (currentScreen === 3) {
+        subtitle.innerText = '3단계: Agent 2,3 라이브 소통 & 가디언';
+        agentTag.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span><span>Agent 2,3 실시간 검증</span>`;
+      } else if (currentScreen === 4) {
+        subtitle.innerText = '4단계: 매너 평가 & 나무 레벨 갱신';
+        agentTag.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>완료</span>`;
+      }
+    }
+
+    function showScreen(screenNum) {
+      currentScreen = screenNum;
+      for (let i = 1; i <= 4; i++) {
+        const scr = document.getElementById(`screen-${i}`);
+        if (i === screenNum) {
+          scr.classList.remove('hidden');
+        } else {
+          scr.classList.add('hidden');
+        }
+      }
+      updateScreenSubtitle();
+    }
+
+    function startMatchingProcess() {
+      showScreen(2);
+      // Simulate terminal logs
+      const logBox = document.getElementById('agent-log-box');
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function selectRestaurant(id) {
+      document.getElementById('rest-1').classList.remove('border-2', 'border-emerald-500');
+      document.getElementById('rest-2').classList.remove('border-2', 'border-emerald-500');
+      
+      document.getElementById(`rest-${id}`).classList.add('border-2', 'border-emerald-500');
+    }
+
+    function enterChatRoom() {
+      showScreen(3);
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const val = input.value.trim();
+      if (!val) return;
+
+      const chatBox = document.getElementById('chat-messages');
+
+      // Check if dangerous keywords are present
+      if (val.includes('종교') || val.includes('영업') || val.includes('포교') || val.includes('세미나')) {
+        triggerDangerAlert();
+        input.value = '';
+        return;
+      }
+
+      // Add user message
+      const myMsgHTML = `
+        <div class="flex gap-2 items-start justify-end animate-fade-in">
+          <div class="max-w-[75%] space-y-1 text-right">
+            <div class="text-[10px] text-slate-400">나 (김민성)</div>
+            <div class="bg-emerald-700 text-white p-2.5 rounded-2xl rounded-tr-none text-[11px] text-left">
+              ${val}
+              <div class="mt-1 pt-1 border-t border-emerald-600 text-[10px] text-emerald-200">
+                <span>🤖 [Agent 2 Stream]:</span> ${val} (Auto-translated to English)
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      chatBox.innerHTML += myMsgHTML;
+      input.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Simulate Sarah's reply after 1.5s
+      setTimeout(() => {
+        const partnerReplyHTML = `
+          <div class="flex gap-2 items-start animate-fade-in">
+            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=120&q=80" class="w-7 h-7 rounded-full object-cover">
+            <div class="max-w-[75%] space-y-1">
+              <div class="text-[10px] text-slate-400">Sarah</div>
+              <div class="bg-slate-800 text-slate-100 p-2.5 rounded-2xl rounded-tl-none border border-slate-700 text-[11px]">
+                That sounds great! See you at 7 PM in front of the restaurant!
+                <div class="mt-1 pt-1 border-t border-slate-700/80 text-[10px] text-emerald-400 flex items-center gap-1">
+                  <span>🤖 [Agent 2 번역]:</span> 아주 좋아요! 저녁 7시에 식당 앞에서 뵈어요!
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        chatBox.innerHTML += partnerReplyHTML;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }, 1200);
+    }
+
+    const icebreakers = [
+      "\"서로의 전공 및 진주 대학가 추천 카페에 대해 대화해보세요!\"",
+      "\"한국 음식 중 가장 좋아하는 매운 맛 단계는 무엇인가요?\"",
+      "\"이번 주말에 추천하는 진주 남강 산책 코스에 대해 이야기해보세요!\""
+    ];
+    let iceIdx = 0;
+    function refreshIcebreaker() {
+      iceIdx = (iceIdx + 1) % icebreakers.length;
+      document.getElementById('icebreaker-text').innerText = icebreakers[iceIdx];
+    }
+
+    function triggerDangerAlert() {
+      alert("🚨 [Agent 3 가디언 경보]\n\n목적 외 언행 (종교/포교/영업) 키워드가 감지되었습니다!\n\n- 해당 발언은 계정 신뢰도(나무 레벨) 차감 사유가 됩니다.\n- 클린 커뮤니티 유지를 위해 즉시 경고 조치됩니다.");
+    }
+
+    function triggerSOS() {
+      alert("🆘 [안심식당 SOS 긴급 호출]\n\n현장 안심식당 매장 점주 및 바오밥 AI 가디언에 긴급 지원 요청이 발송되었습니다.");
+    }
+
+    function finishMealProcess() {
+      showScreen(4);
+    }
+
+    function resetApp() {
+      showScreen(1);
+    }
+
+    function toggleDashboardModal() {
+      const modal = document.getElementById('dashboard-modal');
+      modal.classList.toggle('hidden');
+    }
+
+    function toggleIslandExpand() {
+      const island = document.getElementById('dynamic-island');
+      island.classList.toggle('expanded');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "🍲 한양부대찌개 진주본점",
+    "category": "부대찌개",
+    "address": "경상남도 진주시 가좌길 12번길 8 (경상국립대 정문)",
+    "distance": "320m (도보 4분)",
+    "is_safety": true,
+    "safety_grade": "공공 안심식당 1등급 (위생 우수)",
+    "perk": "바오밥 제휴: 음료수 1병 무료 서비스 + 10% 포인트 적립",
+    "price_info": "부대찌개 (2인 20,000원)",
+    "coordinates": { "lat": 35.1542, "lng": 128.1025 }
+  },
+  {
+    "id": 2,
+    "name": "🍗 진주 유기농 닭갈비",
+    "category": "닭갈비",
+    "address": "경상남도 진주시 진주대로 501번길 15",
+    "distance": "450m (도보 6분)",
+    "is_safety": true,
+    "safety_grade": "공공 안심식당 2등급",
+    "perk": "바오밥 제휴: 라면/치즈 사리 무료 추가",
+    "price_info": "치즈 닭갈비 (2인 24,000원)",
+    "coordinates": { "lat": 35.1538, "lng": 128.1039 }
+  },
+  {
+    "id": 3,
+    "name": "🥩 가좌 골목 삼겹살",
+    "category": "삼겹살",
+    "address": "경상남도 진주시 가좌길 45",
+    "distance": "520m (도보 7분)",
+    "is_safety": true,
+    "safety_grade": "공공 안심식당 1등급",
+    "perk": "바오밥 제휴: 된장찌개 서비스",
+    "price_info": "생삼겹살 2인 세트 (28,000원)",
+    "coordinates": { "lat": 35.1550, "lng": 128.1010 }
+  }
+]

@@ -1,0 +1,30 @@
+{
+  "currentUser": {
+    "id": "usr_001",
+    "name": "김민성",
+    "university": "경상국립대학교",
+    "department": "경영정보학과",
+    "email": "agg1940@naver.com",
+    "univ_verified": true,
+    "ocr_verified": true,
+    "baobab_level": 4,
+    "tree_score": 94,
+    "manner_score": 4.9,
+    "no_show_count": 0,
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
+  },
+  "candidatePartners": [
+    {
+      "id": "usr_002",
+      "name": "Sarah Jenkins",
+      "country": "🇺🇸 미국",
+      "status": "교환학생 (경상국립대 국제어학원)",
+      "korean_level": "초급",
+      "baobab_level": 4,
+      "tree_score": 92,
+      "manner_score": 5.0,
+      "match_score": "98%",
+      "avatar": "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=120&q=80"
+    }
+  ]
+}
