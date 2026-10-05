@@ -81,6 +81,9 @@ BAOBAB/
 
 ## 🚀 6. 실행 방법 (How to Run)
 
+### 로컬에서 사용하기
+Supabase 설정 없이 회원가입과 신뢰도 정보는 `server/data/local-users.json`에 로컬 저장됩니다. 이 파일은 Git에 포함되지 않습니다. 새 AI 키는 `.env`의 `BAOBAB_AI_API_KEY`에 저장하세요. Gemini는 `BAOBAB_AI_PROVIDER=gemini`, OpenAI 호환 API는 `openai`를 사용합니다. 키가 없으면 다양한 오프라인 대화 주제와 기본 문구 번역을 사용할 수 있습니다.
+
 ### 1) 의존성 패키지 설치
 ```bash
 npm install

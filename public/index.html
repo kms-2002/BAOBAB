@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BAOBAB AI — 소셜 다이닝 플랫폼 (ALIO Theme)</title>
+  <title>바오밥 — 오늘의 식사 동행</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <!-- Lucide Icons -->
@@ -20,6 +20,7 @@
       background-color: #f1f5f9;
       color: #0f172a;
     }
+    .bottom-nav { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
 
     .iphone-frame {
       width: 395px;
@@ -35,34 +36,6 @@
       border: 1px solid rgba(226, 232, 240, 0.8);
     }
     
-    /* Dynamic Island */
-    .dynamic-island {
-      width: 120px;
-      height: 34px;
-      background: #0f172a;
-      border-radius: 20px;
-      position: absolute;
-      top: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 50;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 12px;
-      color: white;
-      font-size: 11px;
-    }
-    
-    .dynamic-island.expanded {
-      width: 320px;
-      height: 46px;
-      border-radius: 22px;
-      background: #090d16;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-    }
-
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -86,23 +59,9 @@
   <main class="relative">
     <div class="iphone-frame flex flex-col justify-between text-slate-800">
 
-      <!-- Dynamic Island Bar -->
-      <div id="dynamic-island" class="dynamic-island cursor-pointer" onclick="toggleIslandExpand()">
-        <div class="flex items-center gap-1.5">
-          <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></div>
-          <span id="island-icon" class="text-xs">🌳</span>
-        </div>
-        <div id="island-content" class="text-[11px] font-medium text-emerald-300 truncate max-w-[180px] text-center">
-          BAOBAB AI 가디언 작동 중
-        </div>
-        <div class="flex items-center gap-1 text-[10px] text-slate-400">
-          <span id="island-badge" class="bg-slate-800 px-1.5 py-0.5 rounded text-[9px] text-emerald-400">Server 200</span>
-        </div>
-      </div>
-
       <!-- iPhone Status Bar -->
       <div class="pt-3 px-7 pb-2 flex justify-between items-center text-[12px] font-semibold text-slate-700 z-40 select-none">
-        <span>9:41</span>
+        <span id="local-time">--:--</span>
         <div class="flex items-center gap-1.5">
           <span class="text-[10px] font-bold text-slate-500">5G</span>
           <i data-lucide="wifi" class="w-3.5 h-3.5 text-slate-700"></i>
@@ -119,7 +78,7 @@
             🌳
           </div>
           <div>
-            <div class="text-xs font-bold text-slate-900 tracking-tight">BAOBAB AI</div>
+            <div class="text-xs font-bold text-slate-900 tracking-tight">BAOBAB</div>
             <div id="screen-subtitle" class="text-[10px] text-indigo-600 font-medium">안전 소셜 다이닝</div>
           </div>
         </div>
@@ -151,8 +110,7 @@
                 식사 동행은 <em class="not-italic text-indigo-600 underline decoration-indigo-200">BAOBAB</em>이.
               </h1>
               <p class="text-xs text-slate-500 leading-relaxed pt-1">
-                경상국립대 대학가 1인 가구의 외로움 해소와<br>
-                2인 이상 메뉴 고민을 AI 에이전트가 안전하게 해결해요.
+                경상국립대 근처에서 함께 밥 먹을<br>사람과 식당을 찾아보세요.
               </p>
             </div>
 
@@ -173,18 +131,18 @@
                   🛡️
                 </div>
                 <div>
-                  <div class="text-xs font-bold text-slate-900">2단계 공인 신원 인증</div>
-                  <div class="text-[10px] text-slate-500">대학 메일 + 신분증 OCR 검증으로 신원 불확실성 해소</div>
+                  <div class="text-xs font-bold text-slate-900">프로필을 만들고 시작해요</div>
+                  <div class="text-[10px] text-slate-500">이름과 관심 메뉴를 등록해 동행을 찾아보세요</div>
                 </div>
               </div>
 
               <div class="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-sm flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-lg">
-                  🤖
+                  💬
                 </div>
                 <div>
-                  <div class="text-xs font-bold text-slate-900">AutoGen 다중 에이전트 중재</div>
-                  <div class="text-[10px] text-slate-500">안심식당 추천, 실시간 통번역, 비매너 사전 감지</div>
+                  <div class="text-xs font-bold text-slate-900">편안한 첫 만남</div>
+                  <div class="text-[10px] text-slate-500">안심 식당과 대화 주제를 함께 추천해요</div>
                 </div>
               </div>
             </div>
@@ -193,11 +151,11 @@
           <!-- Bottom Action Buttons -->
           <div class="space-y-2 pt-4">
             <button onclick="goToSignup()" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 text-xs transition active:scale-[0.98]">
-              <span>2단계 공인 인증 회원가입하기</span>
+              <span>프로필 만들기</span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
             <button onclick="quickStartGuest()" class="w-full bg-white hover:bg-slate-100 text-slate-700 font-semibold py-3 rounded-2xl border border-slate-200 text-xs transition">
-              기존 계정으로 둘러보기 (김민성 님)
+              먼저 둘러보기
             </button>
           </div>
         </div>
@@ -209,8 +167,8 @@
         <div id="screen-signup" class="space-y-3 hidden animate-fade">
           <div class="flex items-center justify-between border-b border-slate-200 pb-2">
             <div>
-              <h2 class="text-sm font-bold text-slate-900">바오밥 AI 회원가입</h2>
-              <p class="text-[10px] text-slate-500">대학생 & 유학생 2단계 공인 신원 인증</p>
+              <h2 class="text-sm font-bold text-slate-900">바오밥 가입하기</h2>
+              <p class="text-[10px] text-slate-500">이메일 확인 후 함께 식사할 사람을 찾아보세요</p>
             </div>
             <button onclick="goToStartScreen()" class="text-xs text-slate-400 hover:text-slate-700">취소</button>
           </div>
@@ -219,7 +177,7 @@
             <!-- Name -->
             <div>
               <label class="text-[11px] font-semibold text-slate-700 block mb-1">이름</label>
-              <input type="text" id="su-name" value="김민성" required class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 outline-none focus:border-indigo-500">
+              <input type="text" id="su-name" placeholder="이름" required class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 outline-none focus:border-indigo-500">
             </div>
 
             <!-- University & Department -->
@@ -238,13 +196,11 @@
             <div class="bg-indigo-50/50 border border-indigo-100 rounded-xl p-2.5 space-y-1.5">
               <label class="text-[10px] font-bold text-indigo-900 flex items-center justify-between">
                 <span>1차: 대학 메일 인증 (.ac.kr)</span>
-                <span class="text-[9px] text-emerald-600 font-bold">🟢 인증 완료</span>
+                <span class="text-[9px] text-slate-500 font-bold">이메일 확인 예정</span>
               </label>
               <div class="flex gap-1.5">
-                <input type="email" id="su-email" value="agg1940@gnu.ac.kr" required class="flex-1 bg-white border border-indigo-200 text-xs rounded-lg p-2 text-slate-900 outline-none">
-                <button type="button" onclick="alert('인증번호가 발송되었습니다. [1940]을 입력해주세요.')" class="bg-indigo-600 text-white text-[10px] font-semibold px-2.5 py-1.5 rounded-lg">
-                  발송
-                </button>
+                <input type="email" id="su-email" placeholder="이메일" required class="flex-1 bg-white border border-indigo-200 text-xs rounded-lg p-2 text-slate-900 outline-none">
+                <span class="sr-only">가입 후 확인 메일이 발송됩니다</span>
               </div>
             </div>
 
@@ -252,19 +208,23 @@
             <div class="bg-emerald-50/50 border border-emerald-100 rounded-xl p-2.5 space-y-1.5">
               <label class="text-[10px] font-bold text-emerald-900 flex items-center justify-between">
                 <span>2차: 학생증 / 신분증 OCR 검증</span>
-                <span class="text-[9px] text-emerald-600 font-bold">🟢 본인 확인 완료</span>
+                <span class="text-[9px] text-slate-500 font-bold">선택 사항</span>
               </label>
               <div class="bg-white border border-dashed border-emerald-300 rounded-lg p-3 text-center cursor-pointer hover:bg-emerald-50/20 transition">
                 <i data-lucide="camera" class="w-5 h-5 mx-auto text-emerald-600 mb-1"></i>
-                <div class="text-[10px] text-slate-600 font-medium">학생증 사진 업로드 (OCR 연동)</div>
-                <div class="text-[9px] text-emerald-600 mt-0.5">✓ 김민성 (경상국립대) 일치</div>
+                <div class="text-[10px] text-slate-600 font-medium">학생증 인증은 추후 설정할 수 있어요</div>
               </div>
             </div>
 
+            <div>
+              <label class="text-[11px] font-semibold text-slate-700 block mb-1">비밀번호 (8자 이상)</label>
+              <input type="password" id="su-password" minlength="8" autocomplete="new-password" required class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 outline-none focus:border-indigo-500">
+              <p class="mt-1 text-[9px] text-slate-500">비밀번호는 로컬에서 암호화해 저장합니다.</p>
+            </div>
             <!-- Submit Button -->
             <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 text-xs transition">
               <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-              <span>2단계 인증 & 회원가입 완료</span>
+              <span>가입하고 시작하기</span>
             </button>
           </form>
         </div>
@@ -290,7 +250,7 @@
                   </div>
                   <div class="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5">
                     <i data-lucide="shield-check" class="w-3 h-3"></i>
-                    <span>2단계 공인 인증 완료</span>
+                    <span>내 프로필</span>
                   </div>
                 </div>
               </div>
@@ -407,9 +367,9 @@
             <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
               <div class="flex items-center gap-2">
                 <div class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
-                <span class="font-bold text-emerald-400">Express Agent 1 실행 로그</span>
+                <span class="font-bold text-emerald-400">추천 내역</span>
               </div>
-              <span class="text-[8px] bg-emerald-950 text-emerald-300 px-1.5 py-0.2 rounded">HTTP 200 OK</span>
+              <span class="text-[8px] bg-emerald-950 text-emerald-300 px-1.5 py-0.2 rounded">추천 완료</span>
             </div>
             
             <div id="agent-log-box" class="space-y-1 text-slate-300 text-[9px] max-h-20 overflow-y-auto no-scrollbar">
@@ -633,6 +593,12 @@
 
       </div>
 
+      <nav id="bottom-nav" class="bottom-nav hidden grid grid-cols-4 bg-white border-t border-slate-100 px-2 pt-2 z-40">
+        <button onclick="goToStartScreen()" class="nav-item flex flex-col items-center gap-1 py-1 text-slate-500 text-[10px]"><span>⌂</span>홈</button>
+        <button onclick="goToPreferences()" class="nav-item flex flex-col items-center gap-1 py-1 text-slate-500 text-[10px]"><span>⌕</span>동행 찾기</button>
+        <button onclick="goToCurrentMatch()" class="nav-item flex flex-col items-center gap-1 py-1 text-slate-500 text-[10px]"><span>♡</span>대화</button>
+        <button onclick="goToProfile()" class="nav-item flex flex-col items-center gap-1 py-1 text-slate-500 text-[10px]"><span>○</span>내 정보</button>
+      </nav>
       <!-- iPhone Home Bar -->
       <div class="pb-2 pt-1 flex justify-center bg-white border-t border-slate-100 z-40">
         <div class="w-32 h-1 bg-slate-300 rounded-full"></div>

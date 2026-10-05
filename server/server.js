@@ -1,17 +1,38 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
+
+// Load local secrets without shipping them to the browser or adding a runtime dependency.
+const envFile = path.join(__dirname, '../.env');
+if (fs.existsSync(envFile)) {
+  for (const line of fs.readFileSync(envFile, 'utf8').split(/\r?\n/)) {
+    const entry = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (entry && !entry[1].startsWith('#') && process.env[entry[1]] === undefined) process.env[entry[1]] = entry[2].replace(/^['"]|['"]$/g, '');
+  }
+}
 
 const { runAgent1Matching } = require('./agents/agent1_matching');
 const { translateMessage, getRandomIcebreakerCard } = require('./agents/agent2_translation');
 const { inspectMessageSafety, processMannerRating } = require('./agents/agent3_guardian');
-let usersData = require('./data/users.json');
+const seedUsers = require('./data/users.json');
+const localUsersPath = path.join(__dirname, 'data/local-users.json');
+let localUsers = fs.existsSync(localUsersPath)
+  ? JSON.parse(fs.readFileSync(localUsersPath, 'utf8'))
+  : { currentUser: seedUsers.currentUser, registeredUsers: [] };
+localUsers.registeredUsers ||= [];
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => { res.setHeader('X-Content-Type-Options', 'nosniff'); next(); });
+
+function saveUsers() {
+  fs.writeFileSync(localUsersPath, JSON.stringify(localUsers, null, 2), 'utf8');
+}
 
 // Serve static frontend files from /public directory
 app.use(express.static(path.join(__dirname, '../public')));
@@ -22,7 +43,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.get('/api/user/profile', (req, res) => {
   res.json({
     success: true,
-    data: usersData.currentUser
+    data: localUsers.currentUser
   });
 });
 
@@ -34,32 +55,38 @@ app.post('/api/auth/signup', (req, res) => {
     return res.status(400).json({ success: false, error: "이름과 이메일은 필수 입력사항입니다." });
   }
 
-  // Update mock current user with signed-up info
-  usersData.currentUser = {
+  if (!password || password.length < 8) return res.status(400).json({ success: false, error: '비밀번호는 8자 이상 입력해 주세요.' });
+  const duplicate = localUsers.registeredUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
+  if (duplicate) return res.status(409).json({ success: false, error: '이미 가입된 이메일이에요.' });
+  const salt = crypto.randomBytes(16).toString('hex');
+  const passwordHash = crypto.scryptSync(password, salt, 64).toString('hex');
+  localUsers.currentUser = {
     id: `usr_${Date.now()}`,
     name: name,
     university: university || "경상국립대학교",
     department: department || "학생",
     email: email,
-    univ_verified: true,
-    ocr_verified: true,
-    baobab_level: 4,
-    tree_score: 94,
+    univ_verified: false,
+    ocr_verified: false,
+    baobab_level: 1,
+    tree_score: 60,
     manner_score: 5.0,
     no_show_count: 0,
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
   };
+  localUsers.registeredUsers.push({ ...localUsers.currentUser, passwordSalt: salt, passwordHash });
+  saveUsers();
 
   res.json({
     success: true,
-    message: "회원가입 및 2단계 공인 인증이 정상 완료되었습니다!",
-    data: usersData.currentUser
+    message: '가입이 완료되었습니다. 이 기기의 로컬 데이터에 저장했어요.',
+    data: localUsers.currentUser
   });
 });
 
 // 3. Agent 1: Trigger Matching & Safety Restaurant Search
 app.post('/api/agents/match', (req, res) => {
-  const preferences = req.body || {};
+  const preferences = { ...(req.body || {}), userName: localUsers.currentUser.name };
   const matchResult = runAgent1Matching(preferences);
   res.json({
     success: true,
@@ -68,21 +95,23 @@ app.post('/api/agents/match', (req, res) => {
 });
 
 // 4. Agent 2: Translate Message
-app.post('/api/agents/translate', (req, res) => {
+app.post('/api/agents/translate', async (req, res) => {
   const { message } = req.body;
   if (!message) {
     return res.status(400).json({ success: false, error: "Message is required" });
   }
-  const result = translateMessage(message);
+  try {
+  const result = await translateMessage(message);
   res.json({
     success: true,
     data: result
   });
+  } catch (error) { res.status(502).json({ success: false, error: '번역을 완료하지 못했어요. 잠시 후 다시 시도해 주세요.' }); }
 });
 
 // 5. Agent 2: Get Icebreaker Topic Card
-app.get('/api/agents/icebreaker', (req, res) => {
-  const card = getRandomIcebreakerCard();
+app.get('/api/agents/icebreaker', async (req, res) => {
+  const card = await getRandomIcebreakerCard();
   res.json({
     success: true,
     data: card
@@ -103,6 +132,11 @@ app.post('/api/agents/guardian/inspect', (req, res) => {
 app.post('/api/agents/rating', (req, res) => {
   const { currentScore, isNoShow, mannerStars } = req.body;
   const ratingResult = processMannerRating(currentScore || 94, isNoShow, mannerStars);
+  localUsers.currentUser.tree_score = ratingResult.updatedScore;
+  localUsers.currentUser.baobab_level = ratingResult.baobabLevel;
+  const savedUser = localUsers.registeredUsers.find(user => user.id === localUsers.currentUser.id);
+  if (savedUser) { savedUser.tree_score = ratingResult.updatedScore; savedUser.baobab_level = ratingResult.baobabLevel; }
+  saveUsers();
   res.json({
     success: true,
     data: ratingResult

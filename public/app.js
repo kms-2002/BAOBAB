@@ -3,29 +3,48 @@ lucide.createIcons();
 
 let currentScreen = 0; // Starts at Screen 0 (Onboarding Start Screen)
 let currentScore = 94;
+let selectedRestaurantId = null;
+let recommendedRestaurants = [];
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
 
 document.addEventListener('DOMContentLoaded', () => {
+  updateLocalTime();
+  setInterval(updateLocalTime, 15000);
   fetchUserProfile();
   fetchSurveyStats();
   goToStartScreen();
 });
 
+function updateLocalTime() {
+  const clock = document.getElementById('local-time');
+  if (clock) clock.textContent = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+}
+
 async function fetchUserProfile() {
   try {
+    const savedProfile = localStorage.getItem('baobab-profile');
+    if (savedProfile) {
+      const user = JSON.parse(savedProfile);
+      renderUserProfile(user);
+      return;
+    }
     const res = await fetch('/api/user/profile');
     const json = await res.json();
-    if (json.success) {
-      const user = json.data;
+    if (json.success) renderUserProfile(json.data);
+  } catch (err) {
+    console.error('Failed to fetch user profile:', err);
+  }
+}
+
+function renderUserProfile(user) {
       document.getElementById('user-name').innerText = user.name;
       document.getElementById('user-dept').innerText = user.department;
       document.getElementById('user-email').innerText = user.email;
       document.getElementById('user-level').innerText = `🌳 Lv.${user.baobab_level}`;
       document.getElementById('user-score').innerText = `(${user.tree_score}점)`;
       currentScore = user.tree_score;
-    }
-  } catch (err) {
-    console.error('Failed to fetch user profile:', err);
-  }
 }
 
 async function fetchSurveyStats() {
@@ -88,12 +107,14 @@ function goToStartScreen() {
   hideAllScreens();
   document.getElementById('screen-0').classList.remove('hidden');
   updateHeaderVisibility(false);
+  document.getElementById('bottom-nav').classList.add('hidden');
 }
 
 function goToSignup() {
   hideAllScreens();
   document.getElementById('screen-signup').classList.remove('hidden');
   updateHeaderVisibility(false);
+  document.getElementById('bottom-nav').classList.add('hidden');
 }
 
 function quickStartGuest() {
@@ -102,6 +123,20 @@ function quickStartGuest() {
   document.getElementById('screen-1').classList.remove('hidden');
   updateHeaderVisibility(true);
   updateScreenSubtitle();
+  document.getElementById('bottom-nav').classList.remove('hidden');
+}
+
+function goToPreferences() { quickStartGuest(); }
+function goToCurrentMatch() {
+  if (currentScreen >= 2) enterChatRoom();
+  else triggerMatchAPI();
+}
+function goToProfile() {
+  currentScreen = 1;
+  hideAllScreens(); document.getElementById('screen-1').classList.remove('hidden');
+  updateHeaderVisibility(true); updateScreenSubtitle();
+  document.getElementById('app-viewport').scrollTop = 0;
+  document.getElementById('bottom-nav').classList.remove('hidden');
 }
 
 async function handleSignupSubmit(event) {
@@ -111,24 +146,25 @@ async function handleSignupSubmit(event) {
   const university = document.getElementById('su-univ').value;
   const department = document.getElementById('su-dept').value;
   const email = document.getElementById('su-email').value;
+  const password = document.getElementById('su-password').value;
 
   try {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, university, department, email })
+      body: JSON.stringify({ name, university, department, email, password })
     });
     const json = await res.json();
 
     if (json.success) {
-      alert(`🎉 ${json.message}\n\n[김민성 님 | 2단계 인증 완료]`);
+      alert(`가입 완료! 이 기기의 로컬 데이터에 저장했어요.`);
+      localStorage.setItem('baobab-profile', JSON.stringify(json.data));
       fetchUserProfile();
       quickStartGuest();
-    }
+    } else alert(json.error || '가입에 실패했어요.');
   } catch (err) {
     console.error('Signup error:', err);
-    alert('회원가입 완료! 서비스로 이동합니다.');
-    quickStartGuest();
+    alert('가입을 완료하지 못했어요. 입력한 정보를 확인해 주세요.');
   }
 }
 
@@ -144,6 +180,7 @@ async function triggerMatchAPI() {
     document.getElementById('screen-2').classList.remove('hidden');
     updateHeaderVisibility(true);
     updateScreenSubtitle();
+    document.getElementById('bottom-nav').classList.remove('hidden');
 
     const logBox = document.getElementById('agent-log-box');
     logBox.innerHTML = `<div class="text-slate-400">⏳ /api/agents/match 로 요청 전송 중...</div>`;
@@ -183,8 +220,10 @@ async function triggerMatchAPI() {
       `;
 
       const restList = document.getElementById('restaurant-list');
-      restList.innerHTML = data.matchDetails.recommendedSafetyRestaurants.map((r, idx) => `
-        <div onclick="selectRestaurant(${r.id})" id="rest-${r.id}" class="bg-white ${idx === 0 ? 'border-2 border-indigo-600 shadow-sm' : 'border border-slate-200'} rounded-xl p-3 cursor-pointer transition">
+      recommendedRestaurants = data.matchDetails.recommendedSafetyRestaurants;
+      selectedRestaurantId = recommendedRestaurants[0]?.id ?? null;
+      restList.innerHTML = recommendedRestaurants.map((r, idx) => `
+        <button type="button" onclick="selectRestaurant(${JSON.stringify(r.id)})" id="rest-${r.id}" aria-pressed="${idx === 0}" class="w-full text-left bg-white ${idx === 0 ? 'border-2 border-indigo-600 shadow-sm' : 'border border-slate-200'} rounded-xl p-3 cursor-pointer transition">
           <div class="flex justify-between items-start">
             <div>
               <div class="flex items-center gap-1.5">
@@ -196,9 +235,9 @@ async function triggerMatchAPI() {
                 <span>🎁 ${r.perk}</span>
               </div>
             </div>
-            ${idx === 0 ? '<div class="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">✓</div>' : ''}
+            <div class="restaurant-check ${idx === 0 ? '' : 'hidden'} w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">✓</div>
           </div>
-        </div>
+        </button>
       `).join('');
     }
   } catch (err) {
@@ -207,10 +246,18 @@ async function triggerMatchAPI() {
 }
 
 function selectRestaurant(id) {
-  const items = document.querySelectorAll('#restaurant-list > div');
-  items.forEach(el => el.classList.remove('border-2', 'border-indigo-600'));
-  const target = document.getElementById(`rest-${id}`);
-  if (target) target.classList.add('border-2', 'border-indigo-600');
+  selectedRestaurantId = id;
+  document.querySelectorAll('#restaurant-list > button').forEach(card => {
+    const selected = String(card.id.slice('rest-'.length)) === String(id);
+    card.classList.toggle('border-2', selected);
+    card.classList.toggle('border-indigo-600', selected);
+    card.classList.toggle('shadow-sm', selected);
+    card.classList.toggle('border-slate-200', !selected);
+    card.setAttribute('aria-pressed', String(selected));
+    card.querySelector('.restaurant-check').classList.toggle('hidden', !selected);
+  });
+  const restaurant = recommendedRestaurants.find(item => String(item.id) === String(id));
+  if (restaurant) document.getElementById('chat-rest-name').textContent = restaurant.name;
 }
 
 function enterChatRoom() {
@@ -219,6 +266,7 @@ function enterChatRoom() {
   document.getElementById('screen-3').classList.remove('hidden');
   updateHeaderVisibility(true);
   updateScreenSubtitle();
+  document.getElementById('bottom-nav').classList.remove('hidden');
 }
 
 async function sendMessageAPI() {
@@ -258,11 +306,11 @@ async function sendMessageAPI() {
       const myMsgHTML = `
         <div class="flex gap-2 items-start justify-end animate-fade">
           <div class="max-w-[78%] space-y-1 text-right">
-            <div class="text-[9px] text-slate-400">나 (김민성)</div>
+            <div class="text-[9px] text-slate-400">나</div>
             <div class="bg-indigo-600 text-white p-2.5 rounded-2xl rounded-tr-none text-[11px] text-left shadow-sm">
-              ${text}
+              ${escapeHTML(text)}
               <div class="mt-1 pt-1 border-t border-indigo-500 text-[10px] text-indigo-100 font-medium">
-                ${translatedStr}
+                ${escapeHTML(translatedStr)}
               </div>
             </div>
           </div>
@@ -271,25 +319,6 @@ async function sendMessageAPI() {
       chatBox.innerHTML += myMsgHTML;
       input.value = '';
       chatBox.scrollTop = chatBox.scrollHeight;
-
-      setTimeout(() => {
-        const partnerReplyHTML = `
-          <div class="flex gap-2 items-start animate-fade">
-            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=120&q=80" class="w-6 h-6 rounded-full object-cover">
-            <div class="max-w-[78%] space-y-1">
-              <div class="text-[9px] text-slate-400">Sarah</div>
-              <div class="bg-white text-slate-800 p-2.5 rounded-2xl rounded-tl-none border border-slate-200/80 text-[11px] shadow-sm">
-                That sounds awesome! Let's meet at 7 PM at the restaurant!
-                <div class="mt-1 pt-1 border-t border-slate-100 text-[10px] text-indigo-600 font-medium">
-                  🤖 [Agent 2 API 번역]: 아주 좋아요! 저녁 7시에 식당 앞에서 만나요!
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-        chatBox.innerHTML += partnerReplyHTML;
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }, 1000);
     }
   } catch (err) {
     console.error('Translation API error:', err);
@@ -347,8 +376,4 @@ async function submitRatingAPI() {
   } catch (err) {
     console.error('Rating API error:', err);
   }
-}
-
-function toggleIslandExpand() {
-  document.getElementById('dynamic-island').classList.toggle('expanded');
 }

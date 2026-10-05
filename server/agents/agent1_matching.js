@@ -7,7 +7,7 @@ const users = require('../data/users.json');
  * and calculates the midpoint GPS location to query Public Safety Restaurants.
  */
 function runAgent1Matching(preferences) {
-  const { menu, gender, talkStyle, allowForeigner } = preferences;
+  const { menu, gender, talkStyle, allowForeigner, userName } = preferences;
 
   // Select optimal partner
   const partner = users.candidatePartners[0];
@@ -26,7 +26,7 @@ function runAgent1Matching(preferences) {
     timestamp: new Date().toISOString(),
     status: "MATCHED",
     matchDetails: {
-      user: users.currentUser.name,
+      user: userName || users.currentUser.name,
       partner: partner,
       matchRate: "98%",
       midpointArea: "경상국립대 정문 대학가 안심거리 (진주)",
@@ -35,7 +35,7 @@ function runAgent1Matching(preferences) {
     },
     agentLogs: [
       `🤖 [Agent 1] 사용자 입력 조건 (희망메뉴: ${menu}, 성별: ${gender}, 소통: ${talkStyle}, 유학생: ${allowForeigner ? '허용' : '불가'}) 수신`,
-      `🤖 [Agent 1] GPS 좌표 계산 -> 김민성(300m) & Sarah(340m) 중간지점 도출 완료`,
+      `🤖 [Agent 1] ${userName || users.currentUser.name} 님과 Sarah의 조건을 바탕으로 동행 후보를 찾았어요.`,
       `🤝 [Agent 1] 파트너 'Sarah (미국 유학생)' 1:1 매칭 성공 (적합도 98%)`,
       `📍 [Agent 1] 공공데이터 안심식당 API 호출 -> 최적 중간지점 안심식당 3곳 추출`
     ]
