@@ -61,7 +61,17 @@ app.post('/api/auth/signup', (req, res) => {
 
   if (!password || password.length < 8) return res.status(400).json({ success: false, error: '비밀번호는 8자 이상 입력해 주세요.' });
   const duplicate = localUsers.registeredUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
-  if (duplicate) return res.status(409).json({ success: false, error: '이미 가입된 이메일이에요.' });
+  if (duplicate) {
+    const { passwordSalt, passwordHash, ...profile } = duplicate;
+    const suppliedHash = passwordSalt ? crypto.scryptSync(password, passwordSalt, 64) : Buffer.alloc(0);
+    const storedHash = passwordHash ? Buffer.from(passwordHash, 'hex') : Buffer.alloc(0);
+    if (!storedHash.length || storedHash.length !== suppliedHash.length || !crypto.timingSafeEqual(suppliedHash, storedHash)) {
+      return res.status(409).json({ success: false, error: '이미 가입된 이메일이에요. 기존 비밀번호를 입력하거나 다른 이메일을 사용해 주세요.' });
+    }
+    localUsers.currentUser = profile;
+    saveUsers();
+    return res.json({ success: true, message: '이미 가입된 시연 계정으로 접속했어요.', data: profile });
+  }
   const salt = crypto.randomBytes(16).toString('hex');
   const passwordHash = crypto.scryptSync(password, salt, 64).toString('hex');
   localUsers.currentUser = {
