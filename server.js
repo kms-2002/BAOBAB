@@ -1,2 +1,3 @@
-// Vercel detects root-level Express entrypoints and serves this app as a Function.
+// Vercel detects this root-level Express entrypoint and serves it as a Function.
+require('express');
 module.exports = require('./server/server');
