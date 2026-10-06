@@ -157,7 +157,7 @@ async function handleSignupSubmit(event) {
     const json = await res.json();
 
     if (json.success) {
-      alert(`가입 완료! 이 기기의 로컬 데이터에 저장했어요.`);
+      alert(json.message);
       localStorage.setItem('baobab-profile', JSON.stringify(json.data));
       fetchUserProfile();
       quickStartGuest();

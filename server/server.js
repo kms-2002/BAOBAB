@@ -18,6 +18,7 @@ const { translateMessage, getRandomIcebreakerCard } = require('./agents/agent2_t
 const { inspectMessageSafety, processMannerRating } = require('./agents/agent3_guardian');
 const seedUsers = require('./data/users.json');
 const localUsersPath = path.join(__dirname, 'data/local-users.json');
+const isVercel = process.env.VERCEL === '1';
 let localUsers = fs.existsSync(localUsersPath)
   ? JSON.parse(fs.readFileSync(localUsersPath, 'utf8'))
   : { currentUser: seedUsers.currentUser, registeredUsers: [] };
@@ -31,6 +32,9 @@ app.use(express.json());
 app.use((req, res, next) => { res.setHeader('X-Content-Type-Options', 'nosniff'); next(); });
 
 function saveUsers() {
+  // Vercel Functions have an ephemeral, read-only deployment filesystem.
+  // Keep demo registrations in this warm function instance only.
+  if (isVercel) return;
   fs.writeFileSync(localUsersPath, JSON.stringify(localUsers, null, 2), 'utf8');
 }
 
@@ -79,7 +83,9 @@ app.post('/api/auth/signup', (req, res) => {
 
   res.json({
     success: true,
-    message: '가입이 완료되었습니다. 이 기기의 로컬 데이터에 저장했어요.',
+    message: isVercel
+      ? '가입이 완료되었습니다. 시연용 계정은 서버 실행 중에만 유지됩니다.'
+      : '가입이 완료되었습니다. 이 기기의 로컬 데이터에 저장했어요.',
     data: localUsers.currentUser
   });
 });
@@ -163,9 +169,12 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`=======================================================`);
-  console.log(`🚀 [BAOBAB AI Server] Running live at: http://localhost:${PORT}`);
-  console.log(`🌳 Multi-Agent Server (Signup, Agent 1, 2, 3) ready!`);
-  console.log(`=======================================================`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(`🌳 BAOBAB running at http://localhost:${PORT}`);
+    console.log(`=======================================================`);
+  });
+}
+
+module.exports = app;

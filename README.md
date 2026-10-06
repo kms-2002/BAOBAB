@@ -84,6 +84,9 @@ BAOBAB/
 ### 로컬에서 사용하기
 Supabase 설정 없이 회원가입과 신뢰도 정보는 `server/data/local-users.json`에 로컬 저장됩니다. 이 파일은 Git에 포함되지 않습니다. 새 AI 키는 `.env`의 `BAOBAB_AI_API_KEY`에 저장하세요. Gemini는 `BAOBAB_AI_PROVIDER=gemini`, OpenAI 호환 API는 `openai`를 사용합니다. 키가 없으면 다양한 오프라인 대화 주제와 기본 문구 번역을 사용할 수 있습니다.
 
+### Vercel 시연 배포
+저장소 루트의 `server.js`가 Express Function 진입점이며 `index.html`과 `public/index.html`을 같은 화면으로 유지합니다. Vercel 시연 모드에서는 가입 API가 성공 응답을 보내지만 계정 데이터는 Function 인스턴스 메모리에만 있어 재배포/콜드 스타트 후 유지되지 않을 수 있습니다. 가입 데이터를 계속 보존하려면 Vercel Postgres/Neon 같은 영구 저장소를 연결해야 합니다.
+
 ### 1) 의존성 패키지 설치
 ```bash
 npm install
